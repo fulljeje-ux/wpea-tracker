@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>WPEA Tracker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #484f58;
+    --green: #3fb950;
+    --green-dim: #1a3d24;
+    --blue: #58a6ff;
+    --blue-dim: #1a2d4d;
+    --red: #f85149;
+    --red-dim: #3d1a1a;
+    --gold: #d29922;
+    --gold-dim: #3d2d0a;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .header-label { font-size: 11px; letter-spacing: 1.5px; color: var(--blue); text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+  .header-title { font-size: 20px; font-weight: 700; color: var(--text); }
+  .undo-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text2);
+    font-size: 13px;
+    padding: 7px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .undo-btn:hover { background: var(--border); color: var(--text); }
+  .undo-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Main */
+  .main { max-width: 520px; margin: 0 auto; padding: 16px; }
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 8px; }
+  .card-value { font-size: 30px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+  .card-sub { font-size: 11px; color: var(--text3); }
+  .card.green { border-color: #2ea043; }
+  .card.green .card-value { color: var(--green); }
+  .card.blue .card-value { color: var(--blue); }
+
+  /* Progress bar */
+  .progress-wrap { margin-top: 10px; }
+  .progress-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    background: linear-gradient(90deg, var(--blue), var(--green));
+  }
+  .progress-fill.full { background: linear-gradient(90deg, var(--green), #56d364); }
+  .progress-pct { font-size: 10px; color: var(--text3); }
+
+  /* CTA button */
+  .cta {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #238636, #2ea043);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: inherit;
+    box-shadow: 0 0 20px rgba(46,160,67,0.3);
+    transition: opacity 0.15s;
+  }
+  .cta:active { opacity: 0.85; }
+  .cta.hidden { display: none; }
+
+  /* Sections */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  /* Action buttons */
+  .action-row {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background 0.15s;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .action-row:active { background: var(--border); }
+  .action-row:last-child { margin-bottom: 0; }
+  .action-label { font-size: 14px; font-weight: 500; color: var(--text); }
+  .action-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .action-badge.blue { background: var(--blue-dim); color: var(--blue); }
+  .action-badge.green { background: var(--green-dim); color: var(--green); }
+
+  /* Forms */
+  .form-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px;
+    margin-bottom: 10px;
+  }
+  .form-block:last-child { margin-bottom: 0; }
+  .form-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 10px; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .input-row:last-child { margin-bottom: 0; }
+  input[type="number"], input[type="text"] {
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  input[type="number"]:focus, input[type="text"]:focus {
+    border-color: var(--blue);
+  }
+  input::placeholder { color: var(--text3); }
+  .btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn-blue { background: var(--blue); color: #0d1117; }
+  .btn-red { background: #3d1a1a; color: var(--red); border: 1px solid var(--red); }
+  .preview-text { font-size: 11px; color: var(--text3); margin-top: 6px; }
+  .preview-text span { color: var(--blue); }
+
+  /* Historique */
+  .hist-item {
+    padding: 11px 0;
+    border-bottom: 1px solid #1c2128;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .hist-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .hist-left { flex: 1; min-width: 0; }
+  .hist-action { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .hist-detail { font-size: 11px; color: var(--text2); }
+  .hist-date { font-size: 11px; color: var(--text3); flex-shrink: 0; }
+  .hist-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 20px 0; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 48px;
+    width: 100%;
+    max-width: 520px;
+    transform: translateY(20px);
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .modal-body { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px; }
+  .modal-body strong { color: var(--green); }
+  .modal-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    margin-bottom: 10px;
+    transition: opacity 0.15s;
+  }
+  .modal-btn:active { opacity: 0.85; }
+  .modal-btn.confirm { background: linear-gradient(135deg, #238636, #2ea043); color: #fff; }
+  .modal-btn.cancel { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    z-index: 300;
+    white-space: nowrap;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 380px) {
+    .card-value { font-size: 24px; }
+    .cards { gap: 8px; }
+    .main { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="header-label">PEA Boursorama</div>
+      <div class="header-title">WPEA Tracker</div>
+    </div>
+    <button class="undo-btn" id="undoBtn" onclick="undo()" disabled>
+      ↩ Annuler
+    </button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Cards -->
+  <div class="cards">
+    <div class="card blue">
+      <div class="card-label">💹 Cash Trading</div>
+      <div class="card-value" id="cashDisplay">0€</div>
+      <div class="card-sub">Dispo pour acheter</div>
+    </div>
+    <div class="card" id="cagnotteCard">
+      <div class="card-label">🌍 Cagnotte WPEA</div>
+      <div class="card-value" id="cagnotteDisplay">0€</div>
+      <div class="card-sub">Objectif : 200€</div>
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-pct" id="progressPct">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA achat WPEA -->
+  <button class="cta hidden" id="ctaBtn" onclick="openModal()">
+    🚀 Acheter WPEA maintenant
+  </button>
+
+  <!-- Actions -->
+  <div class="section">
+    <div class="section-title">Actions rapides</div>
+
+    <div class="action-row" onclick="versementMensuel()">
+      <span class="action-label">📅 Versement mensuel</span>
+      <span class="action-badge blue">+270€</span>
+    </div>
+
+    <!-- Gain trade -->
+    <div class="form-block">
+      <div class="form-title">📈 Ajouter un gain de trade</div>
+      <div class="input-row">
+        <input type="text" id="labelInput" placeholder="Action (ex: BNP)">
+      </div>
+      <div class="input-row">
+        <input type="number" id="gainInput" placeholder="Gain en €" oninput="updatePreview()">
+        <button class="btn btn-blue" onclick="ajouterGain()">Répartir</button>
+      </div>
+      <div class="preview-text" id="previewText"></div>
+    </div>
+
+    <!-- Achat action -->
+    <div class="form-block">
+      <div class="form-title">📉 Achat d'une action</div>
+      <div class="input-row">
+        <input type="number" id="depenseInput" placeholder="Montant dépensé €">
+        <button class="btn btn-red" onclick="depenseTrading()">Déduire</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique -->
+  <div class="section">
+    <div class="section-title">Historique</div>
+    <div id="historique">
+      <div class="hist-empty">Aucune opération pour l'instant</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">🌍 Acheter du WPEA</div>
+    <div class="modal-body" id="modalBody"></div>
+    <button class="modal-btn confirm" onclick="confirmerAchat()">✅ J'ai passé l'ordre sur Bourso</button>
+    <button class="modal-btn cancel" onclick="closeModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── État ────────────────────────────────────────────────────
+const DEFAULT_STATE = {
+  cashTrading: 0,
+  cagnotte: 0,
+  historique: []
+};
+
+let history = []; // pile d'états pour undo
+let state = loadState();
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('wpeaTracker');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { ...DEFAULT_STATE, historique: [] };
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('wpeaTracker', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function pushHistory() {
+  history.push(JSON.parse(JSON.stringify(state)));
+  if (history.length > 30) history.shift();
+  document.getElementById('undoBtn').disabled = false;
+}
+
+function undo() {
+  if (!history.length) return;
+  state = history.pop();
+  saveState();
+  render();
+  if (!history.length) document.getElementById('undoBtn').disabled = true;
+  showToast('↩ Annulation effectuée');
+}
+
+// ─── Opérations ──────────────────────────────────────────────
+function versementMensuel() {
+  pushHistory();
+  state.cashTrading += 70;
+  state.cagnotte += 200;
+  addHistorique('📅 Versement mensuel', '+200€ cagnotte · +70€ cash trading', 'blue');
+  saveState();
+  render();
+  showToast('Versement mensuel ajouté ✓');
+}
+
+function ajouterGain() {
+  const gain = parseFloat(document.getElementById('gainInput').value);
+  const label = document.getElementById('labelInput').value.trim();
+  if (!gain || gain <= 0) { showToast('⚠️ Entre un montant valide'); return; }
+  
+  pushHistory();
+  const partWPEA = Math.round(gain / 2);
+  const partTrading = gain - partWPEA;
+  state.cagnotte += partWPEA;
+  state.cashTrading += partTrading;
+  
+  const name = label ? label : 'Trade';
+  addHistorique(`📈 Gain — ${name}`, `+${partWPEA}€ cagnotte · +${partTrading}€ cash trading`, 'green');
+  saveState();
+  render();
+  
+  document.getElementById('gainInput').value = '';
+  document.getElementById('labelInput').value = '';
+  document.getElementById('previewText').textContent = '';
+  showToast(`Gain de ${gain}€ réparti ✓`);
+}
+
+function depenseTrading() {
+  const montant = parseFloat(document.getElementById('depenseInput').value);
+  if (!montant || montant <= 0) { showToast('⚠️ Entre un montant valide'); return; }
+  
+  pushHistory();
+  state.cashTrading = Math.max(0, state.cashTrading - montant);
+  addHistorique('📉 Achat action', `-${montant}€ cash trading`, 'red');
+  saveState();
+  render();
+  
+  document.getElementById('depenseInput').value = '';
+  showToast(`-${montant}€ déduit ✓`);
+}
+
+function confirmerAchat() {
+  const montant = Math.floor(state.cagnotte / 200) * 200;
+  if (montant < 200) return;
+  
+  pushHistory();
+  const reste = state.cagnotte - montant;
+  state.cagnotte = reste;
+  addHistorique('🌍 Achat WPEA', `${montant}€ investis · reste ${reste}€ en cagnotte`, 'gold');
+  saveState();
+  render();
+  closeModal();
+  showToast(`Achat WPEA de ${montant}€ enregistré ✓`);
+}
+
+function addHistorique(action, detail, type) {
+  const now = new Date();
+  const date = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  state.historique.unshift({ action, detail, date, type });
+  if (state.historique.length > 30) state.historique.pop();
+}
+
+// ─── Rendu ───────────────────────────────────────────────────
+function render() {
+  // Cash
+  document.getElementById('cashDisplay').textContent = state.cashTrading + '€';
+  
+  // Cagnotte
+  document.getElementById('cagnotteDisplay').textContent = state.cagnotte + '€';
+  
+  // Progress
+  const pct = Math.min(100, Math.round((state.cagnotte / 200) * 100));
+  const fill = document.getElementById('progressFill');
+  fill.style.width = pct + '%';
+  fill.className = 'progress-fill' + (pct >= 100 ? ' full' : '');
+  document.getElementById('progressPct').textContent = pct + '%';
+  
+  // Card color
+  const card = document.getElementById('cagnotteCard');
+  if (state.cagnotte >= 200) {
+    card.style.borderColor = '#2ea043';
+    document.getElementById('cagnotteDisplay').style.color = 'var(--green)';
+  } else {
+    card.style.borderColor = 'var(--border)';
+    document.getElementById('cagnotteDisplay').style.color = 'var(--blue)';
+  }
+  
+  // CTA
+  const cta = document.getElementById('ctaBtn');
+  if (state.cagnotte >= 200) {
+    const montant = Math.floor(state.cagnotte / 200) * 200;
+    cta.textContent = `🚀 Acheter ${montant}€ de WPEA maintenant`;
+    cta.classList.remove('hidden');
+  } else {
+    cta.classList.add('hidden');
+  }
+  
+  // Historique
+  const hist = document.getElementById('historique');
+  if (!state.historique.length) {
+    hist.innerHTML = '<div class="hist-empty">Aucune opération pour l\'instant</div>';
+  } else {
+    hist.innerHTML = state.historique.slice(0, 15).map(item => `
+      <div class="hist-item">
+        <div class="hist-left">
+          <div class="hist-action">${item.action}</div>
+          <div class="hist-detail">${item.detail}</div>
+        </div>
+        <div class="hist-date">${item.date}</div>
+      </div>
+    `).join('');
+  }
+  
+  // Undo button
+  document.getElementById('undoBtn').disabled = history.length === 0;
+}
+
+// ─── Preview ─────────────────────────────────────────────────
+function updatePreview() {
+  const val = parseFloat(document.getElementById('gainInput').value);
+  const preview = document.getElementById('previewText');
+  if (val > 0) {
+    const partWPEA = Math.round(val / 2);
+    const partTrading = val - partWPEA;
+    preview.innerHTML = `→ <span>+${partWPEA}€ cagnotte WPEA</span> · <span>+${partTrading}€ cash trading</span>`;
+  } else {
+    preview.textContent = '';
+  }
+}
+
+// ─── Modal ───────────────────────────────────────────────────
+function openModal() {
+  const montant = Math.floor(state.cagnotte / 200) * 200;
+  const reste = state.cagnotte - montant;
+  document.getElementById('modalBody').innerHTML = `
+    Tu as <strong>${state.cagnotte}€</strong> en cagnotte. Passe un ordre de 
+    <strong>${montant}€</strong> sur le WPEA dans Boursorama, puis confirme ici.
+    Il restera <strong style="color:var(--blue)">${reste}€</strong> en cagnotte.
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── Toast ───────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Init ────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
